@@ -1,25 +1,30 @@
-from google.cloud import pubsub_v1
+import boto3
 
-# Configurações do Google Cloud Pub/Sub
-project_id = 'seu-projeto-id'
-topic_name = 'topic-firewall-ips-logs'  # Nome do tópico Pub/Sub para logs de firewall e IDS/IPS
+# Configurações do AWS SQS
+queue_url = 'https://sqs.us-east-1.amazonaws.com/058264345289/fila-firewall-ids-ips'  # URL da fila do SQS para logs de firewall e IDS/IPS
 
-# Função para enviar dados para o Pub/Sub
-def publish_to_pubsub(logs, topic_name):
-    publisher = pubsub_v1.PublisherClient()
-    topic_path = publisher.topic_path(project_id, topic_name)
+# Função para enviar dados para o SQS
+def publish_to_sqs(logs, queue_url, profile_name):
+    session = boto3.Session(profile_name=profile_name)
+    sqs = session.client('sqs', region_name='us-east-1')
     
     for log in logs:
-        future = publisher.publish(topic_path, log.encode('utf-8'))
-        print(f'Mensagem publicada: {future.result()}')
+        response = sqs.send_message(
+            QueueUrl=queue_url,
+            MessageBody=log
+        )
+        print(f'Mensagem publicada: {response["MessageId"]}')
 
 # Leitura dos arquivos de logs
-with open('firewall_logs.txt', 'r') as file:
+with open('/workspaces/CyberThreatDetector/data/firewall_logs.txt', 'r') as file:
     firewall_logs = file.readlines()
 
-with open('ids_ips_logs.txt', 'r') as file:
+with open('/workspaces/CyberThreatDetector/data/ids_ips_logs.txt', 'r') as file:
     ids_ips_logs = file.readlines()
 
-# Envio dos dados para o Pub/Sub
-publish_to_pubsub(firewall_logs, 'topic-firewall-logs')
-publish_to_pubsub(ids_ips_logs, 'topic-ids-ips-logs')
+# Nome do perfil AWS CLI
+profile_name = 'aws-data'
+
+# Envio dos dados para o SQS
+publish_to_sqs(firewall_logs, queue_url, profile_name)
+publish_to_sqs(ids_ips_logs, queue_url, profile_name)
