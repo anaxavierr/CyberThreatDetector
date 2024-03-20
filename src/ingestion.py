@@ -25,6 +25,6 @@ with open('/workspaces/CyberThreatDetector/data/ids_ips_logs.txt', 'r') as file:
 # Nome do perfil AWS CLI
 profile_name = 'aws-data'
 
-# Envio dos dados para o SQS
+# Envio dos dados para o SQS.
 publish_to_sqs(firewall_logs, queue_url, profile_name)
 publish_to_sqs(ids_ips_logs, queue_url, profile_name)
